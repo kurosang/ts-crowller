@@ -29,3 +29,35 @@ analyzer 改为单例模式。
 安装 nodemon。监听整个项目文件的变化。
 
 安装 concurrently。并行执行命令。
+
+---
+
+2021.1.22
+
+有个 bug
+
+```
+  "scripts": {
+    "dev:build": "tsc -w",
+    "dev:start": "nodemon node ./build/index.js",
+    "dev": "concurrently npm:dev:*"
+  }
+```
+
+当我们第一次运行 npm run dev 的时候会报错，因为我的 dev 是 concurrently 并行运行上面两条命令，原理是 tsc 监听 ts 文件变化就重新编译，并且重新运行 index.js。
+
+但由于第一次运行的时候可能 index.js 文件还没生成，所以报错。
+
+```
+  "scripts": {
+    "dev:build": "tsc -w",
+    "dev:start": "nodemon node ./build/index.js",
+    "dev": "tsc && concurrently npm:dev:*"
+  }
+```
+
+解决方法：执行并行命令前，先 tsc 编译一次
+
+---
+
+改造一：通过启动 koa，通过接口调用爬虫

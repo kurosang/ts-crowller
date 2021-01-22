@@ -39,51 +39,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-console.log('hello world!!2');
-// ts -> .d.ts 翻译文件 @types/superagent -> js
-var axios_1 = __importDefault(require("axios"));
-var fs_1 = __importDefault(require("fs"));
-var path_1 = __importDefault(require("path"));
-var Crowller = /** @class */ (function () {
-    function Crowller(url, analyzer) {
-        this.url = url;
-        this.analyzer = analyzer;
-        // cnode 社区
-        this.filePath = path_1.default.join(__dirname, '../data/articles.json');
-        console.log('constructor');
-        this.initSpiderProcess();
-    }
-    Crowller.prototype.getRawHtml = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var res;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, axios_1.default.get(this.url)];
-                    case 1:
-                        res = _a.sent();
-                        return [2 /*return*/, res.data];
-                }
-            });
-        });
-    };
-    Crowller.prototype.writeFile = function (content) {
-        fs_1.default.writeFileSync(this.filePath, content);
-    };
-    Crowller.prototype.initSpiderProcess = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var html, fileContent;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.getRawHtml()];
-                    case 1:
-                        html = _a.sent();
-                        fileContent = this.analyzer.analyze(html, this.filePath);
-                        this.writeFile(fileContent);
-                        return [2 /*return*/];
-                }
-            });
-        });
-    };
-    return Crowller;
-}());
-exports.default = Crowller;
+var koa_router_1 = __importDefault(require("koa-router"));
+var crowller_1 = __importDefault(require("./crowller"));
+var cnodeAnalyzer_1 = __importDefault(require("./cnodeAnalyzer"));
+var router = new koa_router_1.default();
+router.get('/', function (ctx) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        ctx.body = '首页';
+        return [2 /*return*/];
+    });
+}); });
+router.get('/getData', function (ctx) { return __awaiter(void 0, void 0, void 0, function () {
+    var url, analyzer;
+    return __generator(this, function (_a) {
+        url = "https://cnodejs.org/?tab=good";
+        analyzer = cnodeAnalyzer_1.default.getInstance();
+        new crowller_1.default(url, analyzer);
+        ctx.body = 'this is getData success';
+        return [2 /*return*/];
+    });
+}); });
+exports.default = router;

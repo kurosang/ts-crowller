@@ -4,7 +4,6 @@ import axios from 'axios'
 
 import fs from 'fs'
 import path from 'path'
-import cnodeAnalyzer from './cnodeAnalyzer'
 
 export interface Analyzer {
   analyze: (html: string, filePath: string) => string
@@ -37,7 +36,4 @@ class Crowller {
   }
 }
 
-const url = `https://cnodejs.org/?tab=good`
-
-const analyzer = cnodeAnalyzer.getInstance()
-new Crowller(url, analyzer)
+export default Crowller
