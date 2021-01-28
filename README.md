@@ -61,3 +61,90 @@ analyzer 改为单例模式。
 ---
 
 改造一：通过启动 koa，通过接口调用爬虫
+
+---
+
+问题 1: koa 库的类型定义文件 .d.ts 文件类型描述不准确
+
+```
+router.post('/getData', async (ctx) => {
+  // ...这里的password是any类型
+  ctx.request.body.password
+})
+```
+
+原因是：Request 的 body 是 any 类型
+
+```
+declare module "koa" {
+    interface Request {
+        body?: any;
+        rawBody: string;
+    }
+}
+```
+
+解决方法是重写 Request，继承
+
+```
+import { Request } from 'koa'
+interface RequestWithBody extends Request {
+  body: {
+    [key: string]: string | undefined
+  }
+}
+
+router.post('/getData', async (ctx) => {
+  const { password } = (ctx.request as RequestWithBody).body
+  if (password === '123') {
+    const url = `https://cnodejs.org/?tab=good`
+    const analyzer = cnodeAnalyzer.getInstance()
+    new Crowller(url, analyzer)
+    ctx.body = 'this is getData success'
+  } else {
+    ctx.body = 'password Error!'
+  }
+})
+```
+
+问题 2: 当使用中间件的时候，对 req 或者 res 做了修改之后呢，实际上类型并不能改变。
+
+类型融合
+
+创建一个`definition.d.ts`文件
+
+```
+import { Request } from 'koa'
+
+declare module 'koa' {
+  interface Request {
+    name: string
+  }
+}
+
+```
+
+index.ts
+
+```
+import Koa, { Request } from 'koa'
+import router from './router'
+import bodyParser from 'koa-bodyparser'
+const app = new Koa()
+
+app.use(bodyParser())
+// 自己写一个中间件，往request上挂东西
+app.use((ctx, next) => {
+  ;(ctx.request as Request).name = '123'
+  next()
+})
+app.use(router.routes()) // 启动路由
+app.use(router.allowedMethods()) // 可以配置也可以配置，建议配置
+
+app.listen(3000, () => {
+  console.log('server running at 3000')
+})
+
+```
+
+这样我们就可以在很多地方都拿到 ctx.request.name 这个字段。相当于全局

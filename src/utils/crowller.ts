@@ -11,7 +11,7 @@ export interface Analyzer {
 
 class Crowller {
   // cnode 社区
-  private filePath = path.join(__dirname, '../data/articles.json')
+  private filePath = path.join(__dirname, '../../data/articles.json')
 
   private async getRawHtml() {
     const res = await axios.get(this.url)

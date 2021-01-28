@@ -39,23 +39,85 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+var fs_1 = __importDefault(require("fs"));
+var path_1 = __importDefault(require("path"));
 var koa_router_1 = __importDefault(require("koa-router"));
-var crowller_1 = __importDefault(require("./crowller"));
-var cnodeAnalyzer_1 = __importDefault(require("./cnodeAnalyzer"));
+var crowller_1 = __importDefault(require("./utils/crowller"));
+var analyzer_1 = __importDefault(require("./utils/analyzer"));
+var util_1 = require("./utils/util");
+var checkLogin = function (ctx, next) {
+    var isLogin = ctx.session ? ctx.session.login : undefined;
+    if (isLogin) {
+        next();
+    }
+    else {
+        ctx.body = util_1.getResponseData(null, '请先登录');
+    }
+};
 var router = new koa_router_1.default();
 router.get('/', function (ctx) { return __awaiter(void 0, void 0, void 0, function () {
+    var isLogin;
     return __generator(this, function (_a) {
-        ctx.body = '首页';
+        isLogin = ctx.session ? ctx.session.login : undefined;
+        if (isLogin) {
+            ctx.body = "\n    <html>\n      <body>\n        <a href=\"/showData\">\u663E\u793A</a>\n        <a href=\"/getData\">\u722C\u53D6</a>\n        <a href=\"/logout\">\u9000\u51FA</a>\n      </body>\n    </html>\n    ";
+        }
+        else {
+            ctx.body = "\n    <html>\n      <body>\n        <form method=\"post\" action=\"/login\">\n          <input type=\"password\" name=\"password\"/>\n          <button>\u63D0\u4EA4</button>\n        </form>\n      </body>\n    </html>";
+        }
         return [2 /*return*/];
     });
 }); });
-router.get('/getData', function (ctx) { return __awaiter(void 0, void 0, void 0, function () {
+router.get('/logout', function (ctx) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        if (ctx.session) {
+            ctx.session.login = undefined;
+        }
+        ctx.body = util_1.getResponseData(true);
+        return [2 /*return*/];
+    });
+}); });
+router.post('/login', function (ctx) { return __awaiter(void 0, void 0, void 0, function () {
+    var password, isLogin;
+    return __generator(this, function (_a) {
+        password = ctx.request.body.password;
+        isLogin = ctx.session ? ctx.session.login : undefined;
+        if (isLogin) {
+            ctx.body = util_1.getResponseData(false, '你已经登录过');
+        }
+        else {
+            if (password === '123' && ctx.session) {
+                ctx.session.login = true;
+                ctx.body = util_1.getResponseData(true, '登陆成功');
+            }
+            else {
+                ctx.body = util_1.getResponseData(false, '登录失败');
+            }
+        }
+        return [2 /*return*/];
+    });
+}); });
+router.get('/getData', checkLogin, function (ctx) { return __awaiter(void 0, void 0, void 0, function () {
     var url, analyzer;
     return __generator(this, function (_a) {
         url = "https://cnodejs.org/?tab=good";
-        analyzer = cnodeAnalyzer_1.default.getInstance();
+        analyzer = analyzer_1.default.getInstance();
         new crowller_1.default(url, analyzer);
-        ctx.body = 'this is getData success';
+        ctx.body = util_1.getResponseData(true);
+        return [2 /*return*/];
+    });
+}); });
+router.get('/showData', checkLogin, function (ctx) { return __awaiter(void 0, void 0, void 0, function () {
+    var postion, result;
+    return __generator(this, function (_a) {
+        try {
+            postion = path_1.default.resolve(__dirname, '../data/articles.json');
+            result = fs_1.default.readFileSync(postion, 'utf-8');
+            ctx.body = util_1.getResponseData(result);
+        }
+        catch (error) {
+            ctx.body = util_1.getResponseData(false, '尚未爬取到内容');
+        }
         return [2 /*return*/];
     });
 }); });
